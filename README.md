@@ -1,161 +1,236 @@
-`# API Документация
+# Тестовое задание — courses-api
 
-## 1️⃣ Заявки
+**Описание:** API для работы с заявками и курсами  
+**Авторизация:** Bearer token `super-secret-token`
+**Ограничение запросов** не более 10 за 1 сек по токену/ip
+**Валидация** входящих данных
+**База данных** - в корне дамп courses_api_dump.sql Также приложены миграции и сидеры. 
 
-Базовый маршрут: api/applications
 
-1. Создание заявки
 
-Метод: POST
-Маршрут: /applications
-Описание: Создает новую заявку на курс.
 
-Параметры запроса (body JSON):
 
-Поле Тип Обязательное Правила валидации Пример
-course_id string Да UUID, существует в courses    "019c..."
-first_name string Да max:255    "Иван"
-last_name string Да max:255    "Иванов"
-middle_name string Да max:255    "Иванович"
-email string Да email, max:255    "ivan@example.com"
+## 1.Заявки
+### Маршруты
 
-Успешный ответ: 200 OK
+| Метод  | URL                 | Действие | Описание                                           |
+|--------|-------------------|----------|--------------------------------------------------|
+| POST   | /api/applications | store    | Создание новой заявки                             |
+| DELETE | /api/applications | delete   | Удаление заявки по id                             |
+| GET    | /api/applications | get      | Получение списка заявок с фильтрацией и пагинацией |
 
+### Структура ответа
+- `status` — успех запроса (`true`/`false`)
+- `statusCode` — HTTP код ответа
+- `message` — сообщение
+- `data` — данные (ресурс или коллекция ресурсов)
+- `timestamp` — метка времени
+- `errorCode` — код ошибки (если есть)
+- `pagination` — пагинация
+### Получение заявок (GET /api/applications)
+
+**Query-параметры:**
+
+- `email` — фильтр по email (необязательно)
+- `course_id` — фильтр по курсу (UUID, необязательно)
+- `sort` — поле для сортировки (`first_name`, `last_name`, `email`, `created_at`)
+- `order` — порядок сортировки (`asc`, `desc`)
+- `page` — номер страницы
+- `per_page` — количество элементов на странице (макс. 100)
+
+**Пример запроса:**
+
+GET http://localhost:port/api/applications?course_id=uuid_курса&sort=created_at&order=desc&page=1&per_page=20
+
+**Пример успешного ответа:**
+```json
 {
-"status": true,
-"statusCode": 200,
-"timestamp": 1700000000,
-"message": "Заявка успешно создана",
-"data": {
-"id": "uuid-заявки",
-"course_id": "uuid-курса",
-"first_name": "Иван",
-"last_name": "Иванов",
-"middle_name": "Иванович",
-"email": "ivan@example.com",
-"created_at": "2026-02-09T00:00:00Z",
-"updated_at": "2026-02-09T00:00:00Z"
+  "status": true,
+  "statusCode": 200,
+  "timestamp": 1676457600,
+  "message": "OK",
+  "data": [
+    {
+      "id": "uuid_заявки_1",
+      "course_id": "uuid_курса",
+      "first_name": "Иван",
+      "last_name": "Иванов",
+      "middle_name": "Иванович",
+      "email": "ivan@example.com",
+      "created_at": "2026-02-09T12:00:00Z"
+    },
+    {
+      "id": "uuid_заявки_2",
+      "course_id": "uuid_курса",
+      "first_name": "Мария",
+      "last_name": "Петрова",
+      "middle_name": "Алексеевна",
+      "email": "maria@example.com",
+      "created_at": "2026-02-08T16:20:00Z"
+    }
+  ],
+  "pagination": {
+    "meta": {
+      "page": {
+        "current": 1,
+        "first": 1,
+        "last": 10,
+        "next": 2,
+        "previous": null,
+        "per": 20,
+        "from": 1,
+        "to": 20,
+        "count": 20,
+        "total": 200,
+        "isFirst": true,
+        "isLast": false,
+        "isNext": true,
+        "isPrevious": false
+      }
+    }
+  }
 }
-}
+```
 
-Ошибки валидации (400 Bad Request)
-Пример:
+## Создание заявки (POST /api/applications)
+**Параметры запроса**
+- `course_id`: uuid_курса,
+- `first_name`: "Иван",
+- `last_name`: "Иванов",
+- `middle_name`: "Иванович",
+- `email`: "ivan@example.com"
 
+**Пример запроса**
+POST http://localhost:port/api/applications
+```json
 {
-"status": false,
-"statusCode": 400,
-"timestamp": 1700000000,
-"message": "Validation failed",
-"data": null,
-"errors": {
-"email": ["The email must be a valid email address."]
-},
-"errorCode": "VALIDATION_FAILED"
+  "course_id": "uuid_курса",
+  "first_name": "Иван",
+  "last_name": "Иванов",
+  "middle_name": "Иванович",
+  "email": "ivan@example.com"
 }
-
-2. Удаление заявки
-
-Метод: DELETE
-Маршрут: /applications
-Описание: Удаляет заявку по id.
-
-Параметры запроса (body JSON):
-
-Поле Тип Обязательное Правила валидации
-id string Да UUID, существует в applications
-
-Успешный ответ: 200 OK
-
+```
+**Пример успешного ответа:**
+```json
 {
-"status": true,
-"statusCode": 200,
-"timestamp": 1700000000,
-"message": "Заявка успешно удалена",
-"data": null
+  "status": true,
+  "statusCode": 200,
+  "timestamp": 1676457600,
+  "message": "Заявка успешно создана",
+  "data": {
+    "id": "uuid_заявки",
+    "course_id": "uuid_курса",
+    "first_name": "Иван",
+    "last_name": "Иванов",
+    "middle_name": "Иванович",
+    "email": "ivan@example.com",
+    "created_at": "2026-02-09T12:00:00Z"
+  }
 }
+```
+## Удаление заявки (DELETE /api/applications)
+**Параметры запроса (JSON body):**
 
-Ошибки валидации (400 Bad Request)
-Пример:
+- `id` — UUID заявки, обязательный
 
+**Пример запроса:**
+DELETE http://localhost:port/api/applications?id=uuid_заявки
+
+```json
 {
-"status": false,
-"statusCode": 400,
-"timestamp": 1700000000,
-"message": "Validation failed",
-"data": null,
-"errors": {
-"id": ["The selected id is invalid."]
-},
-"errorCode": "VALIDATION_FAILED"
+  "id": "uuid_заявки"
 }
+```
 
-3. Получение списка заявок
+**Пример успешного ответа:**
 
-Метод: GET
-Маршрут: /applications
-Описание: Возвращает список заявок, можно фильтровать и сортировать.
-
-Параметры запроса (query params):
-
-Поле Тип Обязательное Правила Пример
-email string Нет email ivan@example.com
-course_id string Нет UUID, существует в courses    "019c..."
-sort string Нет first_name, last_name, email, created_at created_at
-order string Нет asc или desc desc
-page integer Нет min:1 1
-per_page integer Нет min:1, max:100 20
-
-Успешный ответ (пагинация)
-
+```json
 {
-"status": true,
-"statusCode": 200,
-"timestamp": 1700000000,
-"message": "OK",
-"data": [
+  "status": true,
+  "statusCode": 200,
+  "timestamp": 1676457600,
+  "message": "Заявка успешно удалена",
+  "data": null
+}
+```
+
+## 2. Курсы
+
+### Маршруты
+
+| Метод  | URL                 | Действие | Описание                                           |
+|--------|-------------------|----------|--------------------------------------------------|
+| GET    | /api/courses | get      | Получение списка курсов с фильтрацией и пагинацией |
+
+### Структура ответа
+- `status` — успех запроса (`true`/`false`)
+- `statusCode` — HTTP код ответа
+- `message` — сообщение
+- `data` — данные (ресурс или коллекция ресурсов)
+- `timestamp` — метка времени
+- `errorCode` — код ошибки (если есть)
+- `pagination` — пагинаци
+### Получение курсов (GET /api/courses)
+
+**Query-параметры:**
+
+- `title` — фильтр по названию (необязательно)
+- `start_date` — фильтр по дате начала курса (YYYY-MM-DD, необязательно)
+- `end_date` - фильтр по дате окончания курса (YYYY-MM-DD, необязательно)
+- `sort` — поле для сортировки (title, start_date, end_date, необязательно)
+- `order` — порядок сортировки (`asc`, `desc`)
+- `page` — номер страницы
+- `per_page` — количество элементов на странице (макс. 100)
+
+**Пример запроса:**
+
+GET http://localhost:port/api/courses?title=Программирование&sort=start_date&order=asc&page=1&per_page=10
+
+**Структура ответа**
+```json
 {
-"id": "uuid-заявки",
-"course_id": "uuid-курса",
-"first_name": "Иван",
-"last_name": "Иванов",
-"middle_name": "Иванович",
-"email": "ivan@example.com",
-"created_at": "2026-02-09T00:00:00Z",
-"updated_at": "2026-02-09T00:00:00Z"
+  "status": true,
+  "statusCode": 200,
+  "timestamp": 1676457600,
+  "message": "OK",
+  "data": [
+    {
+      "id": "uuid_курса_1",
+      "title": "PHP для начинающих",
+      "description": "Курс для изучения основ PHP",
+      "start_date": "2026-03-01",
+      "end_date": "2026-06-01",
+      "created_at": "2026-02-09T12:00:00Z"
+    },
+    {
+      "id": "uuid_курса_2",
+      "title": "Laravel продвинутый",
+      "description": "Глубокое погружение в Laravel",
+      "start_date": "2026-04-01",
+      "end_date": "2026-07-01",
+      "created_at": "2026-02-10T10:30:00Z"
+    }
+  ],
+  "pagination": {
+    "meta": {
+      "page": {
+        "current": 1,
+        "first": 1,
+        "last": 5,
+        "next": 2,
+        "previous": null,
+        "per": 10,
+        "from": 1,
+        "to": 10,
+        "count": 10,
+        "total": 50,
+        "isFirst": true,
+        "isLast": false,
+        "isNext": true,
+        "isPrevious": false
+      }
+    }
+  }
 }
-],
-"pagination": {
-"meta": {
-"page": {
-"current": 1,
-"first": 1,
-"last": 5,
-"next": 2,
-"previous": null,
-"per": 20,
-"from": 1,
-"to": 20,
-"count": 20,
-"total": 100,
-"isFirst": true,
-"isLast": false,
-"isNext": true,
-"isPrevious": false
-}
-}
-}
-}
-
-Если заявки не найдены (404 Not Found)
-
-{
-"status": false,
-"statusCode": 404,
-"timestamp": 1700000000,
-"message": "Заявки не найдены",
-"data": null,
-"errors": [],
-"errorCode": "RESOURCE_NOT_FOUND"
-}
-
-`
+```
